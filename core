@@ -1,0 +1,423 @@
+import React, { useState } from 'react';
+import { Send, Clock, Users, Calendar, AlertTriangle, HelpCircle, BarChart, FileText, ChevronDown, ChevronUp, CheckCircle, MessageSquare } from 'lucide-react';
+
+const MeetingOrganizerApp = () => {
+  const [meetingTitle, setMeetingTitle] = useState('Weekly Team Sync');
+  const [meetingAgenda, setMeetingAgenda] = useState('Review progress on Q2 initiatives, discuss blockers, and align on priorities for the upcoming week.');
+  const [meetingCategory, setMeetingCategory] = useState('Cross-Team Sync');
+  const [meetingDuration, setMeetingDuration] = useState(60);
+  const [meetingAttendees, setMeetingAttendees] = useState('8');
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [showAnalysisDetails, setShowAnalysisDetails] = useState(false);
+  const [formSubmitted, setFormSubmitted] = useState(false);
+  
+  // Sample meeting categories from the analysis
+  const meetingCategories = [
+    'Sprint Planning',
+    'Cross-Team Sync',
+    'Budget Review',
+    'Leadership Roundtable',
+    'Security Briefing',
+    'QA Review',
+    'Product Sync',
+    'Engineering Retrospective',
+    'Weekly Standup',
+    'Go-To-Market Strategy',
+    'Design Review',
+    'Data Deep Dive',
+    'Customer Success Update',
+    'Marketing Check-in',
+    'Ops Status Call'
+  ];
+  
+  // Meeting data based on category
+  const getMeetingData = (category) => {
+    // This would typically come from a database or API
+    // For this demo, we'll use static data based on our analysis
+    const categoryData = {
+      'Sprint Planning': { avgScore: 0.25, engagementRate: 0.38, asyncOption: true, avgDuration: 30, decisions: 0.35 },
+      'Cross-Team Sync': { avgScore: -0.4, engagementRate: 0.33, asyncOption: true, avgDuration: 45, decisions: 0.20 },
+      'Budget Review': { avgScore: 0.6, engagementRate: 0.28, asyncOption: false, avgDuration: 60, decisions: 0.25 },
+      'Leadership Roundtable': { avgScore: 1.2, engagementRate: 0.29, asyncOption: true, avgDuration: 45, decisions: 0.30 },
+      'Security Briefing': { avgScore: 0.2, engagementRate: 0.31, asyncOption: true, avgDuration: 60, decisions: 0.40 },
+      'QA Review': { avgScore: 1.5, engagementRate: 0.53, asyncOption: false, avgDuration: 45, decisions: 0.45 },
+      'Product Sync': { avgScore: -1.0, engagementRate: 0.46, asyncOption: true, avgDuration: 30, decisions: 0.15 },
+      'Engineering Retrospective': { avgScore: 0.2, engagementRate: 0.32, asyncOption: true, avgDuration: 45, decisions: 0.10 },
+      'Weekly Standup': { avgScore: -0.5, engagementRate: 0.38, asyncOption: true, avgDuration: 45, decisions: 0.05 },
+      'Go-To-Market Strategy': { avgScore: 1.0, engagementRate: 0.24, asyncOption: false, avgDuration: 75, decisions: 0.50 },
+      'Design Review': { avgScore: 0.33, engagementRate: 0.30, asyncOption: false, avgDuration: 65, decisions: 0.35 },
+      'Data Deep Dive': { avgScore: 0.5, engagementRate: 0.23, asyncOption: true, avgDuration: 45, decisions: 0.20 },
+      'Customer Success Update': { avgScore: 2.0, engagementRate: 0.41, asyncOption: false, avgDuration: 60, decisions: 0.55 },
+      'Marketing Check-in': { avgScore: -1.0, engagementRate: 0.56, asyncOption: true, avgDuration: 60, decisions: 0.15 },
+      'Ops Status Call': { avgScore: 2.5, engagementRate: 0.8, asyncOption: false, avgDuration: 45, decisions: 0.60 }
+    };
+    
+    return categoryData[category] || { avgScore: 0, engagementRate: 0, asyncOption: false, avgDuration: 30, decisions: 0.20 };
+  };
+  
+  const currentData = getMeetingData(meetingCategory);
+  
+  // Calculate usefulness score based on our formula
+  const calculateUsefulnessScore = () => {
+    let score = 0;
+    
+    // Calculate based on inputs
+    if (meetingAgenda.trim().length > 20) score += 1; // Agenda provided
+    if (currentData.decisions > 0.30) score += 3; // Likely to result in decisions
+    if (currentData.engagementRate >= 0.60) score += 1; // Inclusive discussion
+    if (currentData.asyncOption) score -= 2; // Async penalty
+    if (meetingDuration > 60) score -= 1; // Long-meeting penalty
+    
+    // Assume follow-up will be sent
+    score += 2;
+    
+    return score;
+  };
+  
+  const usefulnessScore = calculateUsefulnessScore();
+  const usefulnessCategory = usefulnessScore <= 0 ? "Low" : usefulnessScore <= 3 ? "Medium" : "High";
+  const usefulnessColor = usefulnessScore <= 0 ? "#d62728" : usefulnessScore <= 3 ? "#ff7f0e" : "#2ca02c";
+  
+  const handleAnalyze = () => {
+    setFormSubmitted(true);
+  };
+  
+  const renderScoreGauge = (score, max=6, min=-3) => {
+    const range = max - min;
+    const percentage = ((score - min) / range) * 100;
+    
+    return (
+      <div className="w-full bg-gray-200 rounded-full h-4 mt-1">
+        <div 
+          className="h-4 rounded-full" 
+          style={{ 
+            width: `${percentage}%`, 
+            backgroundColor: usefulnessColor 
+          }}
+        ></div>
+      </div>
+    );
+  };
+
+  const getRecommendations = () => {
+    if (usefulnessScore <= 0) {
+      if (currentData.asyncOption) {
+        return {
+          title: "Consider Asynchronous Alternative",
+          recommendations: [
+            "Use a shared document for updates",
+            "Create a Slack/Teams thread for discussion",
+            "Send a detailed email update instead"
+          ]
+        };
+      } else {
+        return {
+          title: "Consider Improving Meeting Effectiveness",
+          recommendations: [
+            "Reduce duration to 45 minutes or less",
+            "Invite only essential participants",
+            "Share a detailed agenda in advance",
+            "Define clear decision points"
+          ]
+        };
+      }
+    } else if (usefulnessScore <= 3) {
+      return {
+        title: "Opportunity to Optimize",
+        recommendations: [
+          "Set explicit decision goals",
+          "Ensure follow-up email is sent",
+          "Ask participants to review materials before meeting"
+        ]
+      };
+    } else {
+      return {
+        title: "This Meeting Looks Effective",
+        recommendations: [
+          "Maintain current structure",
+          "Consider recording decisions for future reference",
+          "Document action items in follow-up"
+        ]
+      };
+    }
+  };
+
+  const recommendations = getRecommendations();
+
+  return (
+    <div className="bg-gray-100 min-h-screen p-4">
+      <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg overflow-hidden">
+        {/* Header */}
+        <div className="bg-indigo-600 text-white p-4">
+          <h1 className="text-2xl font-bold">Meeting Organizer Assistant</h1>
+          <p className="opacity-80">Get instant analysis before sending that meeting invite</p>
+        </div>
+        
+        <div className="flex flex-col md:flex-row">
+          {/* Meeting creation form */}
+          <div className="p-6 md:w-1/2 md:border-r">
+            <h2 className="text-xl font-semibold mb-4">Create Meeting</h2>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Meeting Title</label>
+                <input
+                  type="text"
+                  value={meetingTitle}
+                  onChange={(e) => setMeetingTitle(e.target.value)}
+                  className="w-full p-2 border rounded"
+                  placeholder="Weekly Team Sync"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Meeting Type</label>
+                <div className="relative">
+                  <button 
+                    type="button"
+                    className="w-full flex items-center justify-between border rounded p-2 bg-white"
+                    onClick={() => setDropdownOpen(!dropdownOpen)}
+                  >
+                    <span>{meetingCategory}</span>
+                    {dropdownOpen ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                  </button>
+                  
+                  {dropdownOpen && (
+                    <div className="absolute z-10 w-full mt-1 bg-white border rounded shadow-lg max-h-60 overflow-y-auto">
+                      {meetingCategories.map(category => (
+                        <div 
+                          key={category} 
+                          className="p-2 hover:bg-gray-100 cursor-pointer"
+                          onClick={() => {
+                            setMeetingCategory(category);
+                            setDropdownOpen(false);
+                          }}
+                        >
+                          {category}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Duration (minutes)</label>
+                <select
+                  value={meetingDuration}
+                  onChange={(e) => setMeetingDuration(parseInt(e.target.value))}
+                  className="w-full p-2 border rounded"
+                >
+                  <option value="15">15 minutes</option>
+                  <option value="30">30 minutes</option>
+                  <option value="45">45 minutes</option>
+                  <option value="60">60 minutes</option>
+                  <option value="90">90 minutes</option>
+                  <option value="120">120 minutes</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Number of Attendees</label>
+                <input
+                  type="number"
+                  value={meetingAttendees}
+                  onChange={(e) => setMeetingAttendees(e.target.value)}
+                  className="w-full p-2 border rounded"
+                  min="2"
+                  max="30"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Agenda/Description</label>
+                <textarea
+                  value={meetingAgenda}
+                  onChange={(e) => setMeetingAgenda(e.target.value)}
+                  className="w-full p-2 border rounded h-32"
+                  placeholder="Describe the purpose and agenda for this meeting..."
+                ></textarea>
+              </div>
+              
+              <button 
+                type="button" 
+                onClick={handleAnalyze}
+                className="w-full bg-indigo-600 text-white py-2 px-4 rounded font-medium hover:bg-indigo-700"
+              >
+                Analyze Meeting
+              </button>
+            </div>
+          </div>
+          
+          {/* Meeting analysis */}
+          <div className="p-6 md:w-1/2 bg-gray-50">
+            <h2 className="text-xl font-semibold mb-4">Meeting Analysis</h2>
+            
+            {!formSubmitted ? (
+              <div className="text-center py-12 text-gray-500">
+                <FileText className="w-16 h-16 mx-auto mb-4 opacity-30" />
+                <p>Fill out the form and click "Analyze Meeting" to get insights</p>
+              </div>
+            ) : (
+              <>
+                <div className="bg-white rounded-lg p-4 shadow-sm mb-6">
+                  <div className="flex justify-between items-center mb-3">
+                    <h3 className="font-semibold">{meetingTitle || "Untitled Meeting"}</h3>
+                    <div className="flex space-x-2">
+                      <span className="flex items-center text-gray-500 text-sm">
+                        <Clock className="w-4 h-4 mr-1" />
+                        {meetingDuration} min
+                      </span>
+                      <span className="flex items-center text-gray-500 text-sm">
+                        <Users className="w-4 h-4 mr-1" />
+                        {meetingAttendees}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-gray-50 p-3 rounded-lg">
+                      <div className="text-sm text-gray-500">Usefulness Score</div>
+                      <div className="text-2xl font-bold" style={{ color: usefulnessColor }}>
+                        {usefulnessScore} <span className="text-sm">/ 6</span>
+                      </div>
+                      {renderScoreGauge(usefulnessScore)}
+                      <div className="mt-1 text-sm" style={{ color: usefulnessColor }}>
+                        {usefulnessCategory} Usefulness
+                      </div>
+                    </div>
+                    
+                    <div className="bg-gray-50 p-3 rounded-lg">
+                      <div className="text-sm text-gray-500">Expected Engagement</div>
+                      <div className="text-2xl font-bold text-blue-600">
+                        {Math.round(currentData.engagementRate * 100)}%
+                      </div>
+                      {renderScoreGauge(currentData.engagementRate, 1, 0)}
+                      <div className="mt-1 text-sm text-blue-600">
+                        {currentData.engagementRate >= 0.6 ? "High" : currentData.engagementRate >= 0.4 ? "Medium" : "Low"} Engagement
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-between items-center mt-4">
+                    <button 
+                      className="text-indigo-600 text-sm flex items-center hover:text-indigo-800"
+                      onClick={() => setShowAnalysisDetails(!showAnalysisDetails)}
+                    >
+                      {showAnalysisDetails ? "Hide Details" : "Show Details"}
+                      {showAnalysisDetails ? <ChevronUp className="w-4 h-4 ml-1" /> : <ChevronDown className="w-4 h-4 ml-1" />}
+                    </button>
+                    <div className="text-xs text-gray-500">based on 60 similar meetings</div>
+                  </div>
+                  
+                  {showAnalysisDetails && (
+                    <div className="mt-4 border-t pt-4 space-y-3 text-sm">
+                      <div className="flex items-start">
+                        <BarChart className="w-4 h-4 text-gray-500 mr-2 mt-0.5" />
+                        <div>
+                          <strong>Historical Metrics for {meetingCategory}:</strong>
+                          <ul className="list-disc pl-5 mt-1 space-y-1">
+                            <li>Average score: {currentData.avgScore.toFixed(1)} points</li>
+                            <li>Decision rate: {Math.round(currentData.decisions * 100)}% of meetings</li>
+                            <li>Typical duration: {currentData.avgDuration} minutes</li>
+                          </ul>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-start">
+                        <HelpCircle className="w-4 h-4 text-gray-500 mr-2 mt-0.5" />
+                        <div>
+                          <strong>Score Factors:</strong>
+                          <ul className="list-disc pl-5 mt-1 space-y-1">
+                            <li>Agenda provided: {meetingAgenda.trim().length > 20 ? <span className="text-green-600">+1</span> : <span className="text-red-600">+0</span>}</li>
+                            <li>Decisions likely: {currentData.decisions > 0.30 ? <span className="text-green-600">+3</span> : <span className="text-red-600">+0</span>}</li>
+                            <li>Inclusive discussion: {currentData.engagementRate >= 0.60 ? <span className="text-green-600">+1</span> : <span className="text-red-600">+0</span>}</li>
+                            <li>Async penalty: {currentData.asyncOption ? <span className="text-red-600">-2</span> : <span className="text-green-600">0</span>}</li>
+                            <li>Long-meeting penalty: {meetingDuration > 60 ? <span className="text-red-600">-1</span> : <span className="text-green-600">0</span>}</li>
+                            <li>Follow-up planned: <span className="text-green-600">+2</span></li>
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Recommendations */}
+                <div className="bg-white rounded-lg p-4 shadow-sm mb-6">
+                  <h3 className="font-semibold mb-3 flex items-center">
+                    <CheckCircle className="w-5 h-5 mr-2 text-indigo-600" />
+                    {recommendations.title}
+                  </h3>
+                  
+                  <ul className="space-y-2">
+                    {recommendations.recommendations.map((rec, index) => (
+                      <li key={index} className="flex items-center bg-indigo-50 p-2 rounded text-indigo-800">
+                        <div className="w-6 h-6 bg-indigo-100 rounded-full flex items-center justify-center mr-2 flex-shrink-0">
+                          {index + 1}
+                        </div>
+                        {rec}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                
+                {/* Alternative suggestions */}
+                {currentData.asyncOption && usefulnessScore <= 1 && (
+                  <div className="bg-amber-50 rounded-lg p-4 shadow-sm mb-6">
+                    <h3 className="font-semibold mb-3 flex items-center text-amber-800">
+                      <MessageSquare className="w-5 h-5 mr-2" />
+                      Async Alternative Template
+                    </h3>
+                    
+                    <div className="bg-white border border-amber-200 rounded-lg p-3 text-sm text-gray-700">
+                      <p className="mb-2"><strong>Subject:</strong> [Async] {meetingTitle || "Meeting Topic"}</p>
+                      <p className="mb-2"><strong>To:</strong> [Team Members]</p>
+                      <hr className="my-2" />
+                      <p>Hi team,</p>
+                      <p className="mt-2">
+                        Instead of our scheduled meeting, I'd like to handle this asynchronously to respect everyone's time.
+                      </p>
+                      <p className="mt-2">
+                        {meetingAgenda ? meetingAgenda : "Please review the attached document/information and provide your feedback by [date]. I'll compile all responses and share a summary."}
+                      </p>
+                      <p className="mt-2">
+                        If you have any questions or concerns, please respond to this thread.
+                      </p>
+                      <p className="mt-2">Thanks!</p>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Action buttons */}
+                <div className="flex space-x-3">
+                  {usefulnessScore <= 0 && currentData.asyncOption ? (
+                    <>
+                      <button className="flex-1 bg-amber-100 text-amber-700 py-2 px-4 rounded font-medium hover:bg-amber-200">
+                        Send as Async Update
+                      </button>
+                      <button className="flex-1 bg-gray-200 text-gray-700 py-2 px-4 rounded font-medium hover:bg-gray-300">
+                        Schedule Anyway
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button className="flex-1 bg-gray-200 text-gray-700 py-2 px-4 rounded font-medium hover:bg-gray-300">
+                        Edit Meeting
+                      </button>
+                      <button className="flex-1 bg-indigo-600 text-white py-2 px-4 rounded font-medium hover:bg-indigo-700 flex items-center justify-center">
+                        <Send className="w-4 h-4 mr-2" />
+                        Send Invites
+                      </button>
+                    </>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default MeetingOrganizerApp;
