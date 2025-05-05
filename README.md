@@ -50,3 +50,4 @@ This approach directly addresses the key issues we identified in the analysis:
 65% of meetings could be handled asynchronously
 Many meetings lack agendas, decisions, and sufficient engagement
 The organizer can now see these issues before scheduling the meeting
+![image](https://github.com/user-attachments/assets/571b80ac-8d5d-4daa-8966-2b4d67578347)
