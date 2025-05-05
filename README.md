@@ -51,3 +51,7 @@ This approach directly addresses the key issues we identified in the analysis:
 Many meetings lack agendas, decisions, and sufficient engagement
 The organizer can now see these issues before scheduling the meeting
 ![image](https://github.com/user-attachments/assets/571b80ac-8d5d-4daa-8966-2b4d67578347)
+![image](https://github.com/user-attachments/assets/1778491c-6a21-4546-903b-7c8dc5f65833)
+![image](https://github.com/user-attachments/assets/6299353e-85cb-4168-abdc-e94cd9b3dfa8)
+
+
