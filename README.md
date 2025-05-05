@@ -1,4 +1,4 @@
-Key Features of the Meeting Organizer UI:
+**Key Features of the Meeting Organizer UI:**
 
 Pre-meeting Planning Interface
 
